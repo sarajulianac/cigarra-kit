@@ -39,9 +39,11 @@ def a_mm(unidades):
 CARTON_MM = 1.5
 CARTULINA_MM = 0.4
 
-# Holgura de las ranuras: la ranura mide grosor + HOLGURA_MM.
-# Valor provisional; se calibra con la peineta de prueba (ver abajo).
-HOLGURA_MM = 0.3
+# Holgura TOTAL de las ranuras (no por lado): la ranura mide grosor + holgura.
+# Una por material, porque cada uno se comprime distinto. Valores provisionales;
+# se calibran con la peineta de prueba (ver abajo).
+HOLGURA_CARTON_MM = 0.3
+HOLGURA_CARTULINA_MM = 0.3
 
 # ---------------------------- ANCHOS MINIMOS (mm) ----------------------------
 # Lo mas delgado que cada tecnica puede cortar o imprimir sin romperse.
@@ -50,7 +52,16 @@ ANCHO_MIN_LASER_MM = 0.8
 ANCHO_MIN_IMPRESO_MM = 0.3
 
 # ---------------------------- PEINETA DE PRUEBA ------------------------------
-# Ranuras de ancho CARTON_MM + desfase, para probar con el laser real cual
-# ajusta mejor (de -0,2 a +0,3 mm en pasos de 0,1). Se escriben a mano en vez
-# de generarlas con un paso decimal para evitar errores de redondeo (0,30000004).
+# Ranuras de ancho grosor + desfase (para carton y para cartulina), para probar
+# con el laser real cual ajusta mejor (de -0,2 a +0,3 mm en pasos de 0,1).
+# Se escriben a mano en vez de generarlas con un paso decimal para evitar
+# errores de redondeo (0,30000004).
 PEINETA_DESFASES_MM = (-0.2, -0.1, 0.0, 0.1, 0.2, 0.3)
+
+# ---------------------------- ARCHIVOS PARA EL LASER -------------------------
+# Convencion de colores mas comun (rojo = cortar, azul = grabar). Confirmar con
+# el lugar de corte (Comercial Papelera) y cambiar aqui si usan otra.
+COLOR_CORTE = "#ff0000"
+COLOR_GRABADO = "#0000ff"
+# Trazo "linea fina": muchos programas de laser solo cortan lineas muy delgadas.
+TRAZO_MM = 0.1
