@@ -54,7 +54,14 @@ Pipeline que convierte un modelo 3D de una **cigarra** en un **kit para armar si
   grosor + 2·holgura; los módulos nuevos no.
 - Corte láser previsto en **Comercial Papelera**. Colores del SVG: rojo = corte, azul = grabado
   (convención común, falta confirmarla con ellos; se cambia en `config.py`).
-- Pruebas (sin Blender): `python3 -m unittest -v` desde `cigarra-kit/`.
+- Pruebas (sin abrir Blender, pero con su Python, que trae numpy; el `python3` del sistema no lo
+  trae), desde `cigarra-kit/`:
+  `/Applications/Blender.app/Contents/Resources/5.2/python/bin/python3.13 -m unittest -v`
+- Pipeline en Blender: `correr_en_blender.py` (Text Editor → Run Script, o por el MCP).
+- Contornos: tolerancia de simplificación 0,1 mm (`TOLERANCIA_MM`). **Solo se simplifican bordes
+  trazados** (chasis, capas); ranuras y pestañas nunca, se agregan después y exactas.
+- Chasis = silueta del cuerpo + 1,5 mm de margen (`MARGEN_CHASIS_MM`). En los SVG la cigarra va
+  **con la cabeza hacia arriba**, como cuelga en la pared (giro de 90°, sin reflejar).
 - **Sin pegante.** Uniones permitidas: ranura + pestaña, atrapada entre capas, remache (perla), engaste.
 - Venas de corte del ala: deben formar **un solo componente conectado** (si no, se caen al cortar).
 

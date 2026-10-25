@@ -24,10 +24,10 @@ if REPO not in sys.path:
 
 # Recargar: sin esto Blender sigue usando la version vieja de los modulos
 # aunque se hayan editado los archivos.
-import cigarra.config, cigarra.entrada, cigarra.vista  # noqa: E401
-for modulo in (cigarra.config, cigarra.entrada, cigarra.vista):
+import cigarra.config, cigarra.entrada, cigarra.vista, cigarra.curvas_nivel, cigarra.exportar  # noqa: E401
+for modulo in (cigarra.config, cigarra.entrada, cigarra.vista, cigarra.curvas_nivel, cigarra.exportar):
     importlib.reload(modulo)
-from cigarra import config, entrada, vista  # noqa: E402
+from cigarra import config, curvas_nivel, entrada, exportar, vista  # noqa: E402
 
 
 def guardar_png(arreglo_rgb, nombre, carpeta):
@@ -45,35 +45,61 @@ def guardar_png(arreglo_rgb, nombre, carpeta):
     return im.filepath_raw
 
 
+def chasis_svg(cuerpo, carpeta):
+    """Silueta del cuerpo -> chasis con margen -> contorno limpio -> SVG con la cabeza arriba."""
+    px = config.PIXEL_MM
+    # Margen: dilatar con un pincel redondo de MARGEN_CHASIS_MM de radio.
+    chasis = curvas_nivel.dilatar(cuerpo, round(config.MARGEN_CHASIS_MM / px))
+
+    # Fabricabilidad: una sola isla y nada mas angosto que el minimo del laser.
+    islas = curvas_nivel.contar_islas(chasis)
+    delgado = curvas_nivel.zonas_delgadas(chasis, round(config.ANCHO_MIN_LASER_MM / 2 / px))
+    print(f"Chasis: {len(islas)} isla(s) | zonas mas angostas que "
+          f"{config.ANCHO_MIN_LASER_MM} mm: {delgado.sum()} px")
+
+    limpios, n_crudos = curvas_nivel.contornos_mm(chasis, px, config.TOLERANCIA_MM)
+    huecos = sum(curvas_nivel.area_con_signo(c) < 0 for c in limpios)
+    print(f"Contornos: {len(limpios)} ({huecos} huecos) | puntos {n_crudos} -> "
+          f"{sum(len(c) for c in limpios)} con tolerancia {config.TOLERANCIA_MM} mm")
+
+    hoja, ancho, alto = exportar.cabeza_arriba(limpios)
+    lienzo = exportar.Lienzo(ancho, alto)
+    for c in sorted(hoja, key=lambda c: abs(curvas_nivel.area_con_signo(c))):
+        lienzo.polilinea(c)          # huecos (mas pequenos) antes que el borde exterior
+    print(f"SVG: hoja {ancho:.1f} x {alto:.1f} mm ->",
+          lienzo.guardar(os.path.join(carpeta, "chasis.svg")))
+    return chasis
+
+
 def main():
     t = time.time()
     malla = entrada.cargar_cuerpo("Cigarra")
     rejilla = vista.Rejilla.alrededor(malla)
     altura, parte = vista.mapa_de_alturas(malla, rejilla)
-    chasis = vista.silueta(altura)
+    cuerpo = vista.silueta(altura)
     segundos = time.time() - t
 
     px_mm = config.PIXEL_MM
-    filas, columnas = np.nonzero(chasis)
+    filas, columnas = np.nonzero(cuerpo)
     print("=" * 64)
     print(f"Piezas del cuerpo ({len(malla.nombres)}): {', '.join(malla.nombres)}")
     print(f"Malla: {len(malla.vertices)} vertices, {len(malla.triangulos)} triangulos")
     print(f"Rejilla {rejilla.ancho} x {rejilla.alto} = {rejilla.ancho * rejilla.alto} rayos "
           f"| pixel {px_mm} mm | {segundos:.1f} s")
-    print(f"Chasis: {(np.ptp(columnas) + 1) * px_mm:.1f} x {(np.ptp(filas) + 1) * px_mm:.1f} mm "
-          f"| area {chasis.sum() * px_mm ** 2 / 100:.1f} cm2")
+    print(f"Silueta del cuerpo: {(np.ptp(columnas) + 1) * px_mm:.1f} x {(np.ptp(filas) + 1) * px_mm:.1f} mm "
+          f"| area {cuerpo.sum() * px_mm ** 2 / 100:.1f} cm2")
     ocultas = [n for k, n in enumerate(malla.nombres) if not (parte == k).any()]
     print("Piezas que no se ven desde arriba:", ", ".join(ocultas) or "ninguna")
-    print("=" * 64)
-
     carpeta = os.path.join(REPO, "salida")
     os.makedirs(carpeta, exist_ok=True)
+    chasis = chasis_svg(cuerpo, carpeta)
+    print("=" * 64)
     # Silueta: negro sobre blanco. Alturas: mas claro = mas alto.
-    print("PNG:", guardar_png(np.repeat(~chasis[..., None], 3, axis=2).astype(float),
+    print("PNG:", guardar_png(np.repeat(~cuerpo[..., None], 3, axis=2).astype(float),
                               "chasis_silueta", carpeta))
     z = np.nan_to_num((altura - np.nanmin(altura)) / np.nanmax(altura - np.nanmin(altura)), nan=0.0)
     print("PNG:", guardar_png(np.repeat(z[..., None], 3, axis=2), "mapa_alturas", carpeta))
-    return malla, rejilla, altura, parte, chasis
+    return malla, rejilla, altura, parte, cuerpo, chasis
 
 
 if __name__ == "__main__":
