@@ -47,8 +47,14 @@ Pipeline que convierte un modelo 3D de una **cigarra** en un **kit para armar si
   - Ojo: la envergadura medida de los modelos es ~1,23 unidades; Sara decidió conservar 1,178,
     así que el kit real sale de ~31,4 cm.
 - Anchos mínimos: bisturí 2 mm · **láser 0,8 mm** · impreso 0,3 mm.
-- Cartón 1,5 mm · cartulina 0,4 mm · **holgura** de ranuras 0,3 mm (provisional: se calibra con la
-  peineta de prueba).
+- Cartón 1,5 mm · cartulina 0,4 mm.
+- **Holgura TOTAL** (no por lado): ranura = grosor + holgura. Una por material
+  (`HOLGURA_CARTON_MM`, `HOLGURA_CARTULINA_MM`), ambas 0,3 mm provisionales hasta cortar la peineta
+  (`python3 -m cigarra.peineta` → `salida/peineta_prueba.svg`). Ojo: `legado/cigarra_hibrida.py` usaba
+  grosor + 2·holgura; los módulos nuevos no.
+- Corte láser previsto en **Comercial Papelera**. Colores del SVG: rojo = corte, azul = grabado
+  (convención común, falta confirmarla con ellos; se cambia en `config.py`).
+- Pruebas (sin Blender): `python3 -m unittest -v` desde `cigarra-kit/`.
 - **Sin pegante.** Uniones permitidas: ranura + pestaña, atrapada entre capas, remache (perla), engaste.
 - Venas de corte del ala: deben formar **un solo componente conectado** (si no, se caen al cortar).
 

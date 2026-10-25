@@ -18,18 +18,23 @@ algoritmo junto a la foto de referencia.
 | `piezas` | Clase `Pieza`: nombre, contorno, técnica, altura | Lista indexada | Claude | Nuevo |
 | `armado` | Árbol de armado: cada pieza sabe sobre cuál va; el recorrido da los pasos del manual | Árbol | **Sara** | Nuevo |
 | `uniones` | Un tipo de unión: ranura en la pieza padre + pestaña en la hija | Booleanas 2D | Claude | Nuevo, simple |
-| `exportar` | SVG a escala real (mm) para el láser + JSON del manual | — | Claude | Nuevo |
+| `exportar` | SVG a escala real (mm) para el láser + JSON del manual | — | Claude | SVG hecho (capas corte/grabado); falta JSON |
 | `alas` | Venas procedurales: ramificación fractal (venas principales, corte) + Voronoi de pocos centros (celdas, impresas) | Grafo + Voronoi | **Sara** (regla de ramificación) + Claude | Prototipo 2D |
 | `textura` | Textura proyectada en perspectiva desde el ojo del observador | Mapeo proyectivo | — | Después del martes |
 
 ## Orden de trabajo
 
-0. **Peineta de prueba** (primer SVG del pipeline): una tira de cartón con ranuras de ancho
-   `CARTON_MM` + desfase, de −0,2 a +0,3 mm en pasos de 0,1 (1,3 · 1,4 · 1,5 · 1,6 · 1,7 · 1,8 mm),
-   cada una rotulada con su medida. Se corta en el láser real y se prueba qué ranura sostiene una
-   pestaña de cartón firme pero sin forzarla; ese desfase pasa a `HOLGURA_MM` en `config.py`.
-   Así se calibra la holgura antes de cortar piezas de verdad (el láser quema ~0,1–0,2 mm de material
-   y eso varía con cada máquina y cada cartón). Valores en `config.PEINETA_DESFASES_MM`.
+0. **Peineta de prueba** (primer SVG del pipeline, **hecho**: `cigarra/peineta.py`,
+   `salida/peineta_prueba.svg`). Dos piezas cortadas en cartón, con desfases de −0,2 a +0,3 mm en
+   pasos de 0,1 sobre el grosor, cada ranura rotulada con su medida:
+   - peine con ranuras **abiertas** para cartón (1,3 · 1,4 · 1,5 · 1,6 · 1,7 · 1,8 mm);
+   - tira con ranuras **cerradas** para cartulina (0,2 … 0,7 mm), como las del chasis donde entran
+     las pestañas de las bandas del abdomen y del pronoto.
+
+   Se corta en el láser real (Comercial Papelera) y se prueba qué ranura sostiene la pestaña firme sin
+   forzarla; ese ancho menos el grosor pasa a `HOLGURA_CARTON_MM` / `HOLGURA_CARTULINA_MM`.
+   La holgura es **total**, no por lado. Así se calibra antes de cortar piezas de verdad (el láser
+   quema ~0,1–0,2 mm de material y eso varía con cada máquina y cada cartón).
 1. `entrada` + `vista`: pasar el código existente a módulos limpios.
 2. `curvas_nivel` + `exportar`: convertir las capas en archivos de corte reales.
 3. `piezas` + `armado`: el árbol que pidió el profesor.
