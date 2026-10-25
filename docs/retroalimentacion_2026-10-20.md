@@ -1,8 +1,5 @@
 # Retroalimentación del profesor — Proyecto final (cigarra para armar)
 
-Fecha de la grabación: 20 de octubre de 2026 (después de la exposición de estructuras de datos).
-Resumen hecho a partir de la transcripción automática del audio (algunas frases salieron imperfectas; las ideas principales son claras).
-
 ## 1. Alas: procedurales, no calcadas
 - Los patrones de las venas tienen que ver con **fractales**.
 - Buscar cómo esas líneas pueden **generarse con un algoritmo** que las dibuje y genere también la textura.
