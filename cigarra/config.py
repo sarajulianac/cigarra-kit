@@ -35,6 +35,11 @@ def a_mm(unidades):
     return unidades / MM
 
 
+# ---------------------------- VISTA (mapa de alturas) ------------------------
+# Tamano de cada pixel del mapa de alturas, en mm reales. ~3 veces mas fino
+# que el ancho minimo del laser (0,8 mm), para que los bordes no salgan en escalera.
+PIXEL_MM = 0.25
+
 # ---------------------------- MATERIALES (grosor, mm) ------------------------
 CARTON_MM = 1.5
 CARTULINA_MM = 0.4
