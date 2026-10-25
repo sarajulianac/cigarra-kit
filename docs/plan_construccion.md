@@ -14,12 +14,13 @@ algoritmo junto a la foto de referencia.
 | `config` | Escala (30 cm de envergadura) y reglas de fabricación en un solo lugar | Constantes | Claude | Hecho |
 | `entrada` | Carga la cigarra, quita las alas, la lleva a su marco local | Malla (lista indexada) | Claude | Hecho (sin BMesh; quita Ala y Vena) |
 | `vista` | Vista ortográfica cenital → mapa de alturas | BVH + arreglo 2D | Claude | Hecho: mapa de alturas + silueta del chasis (píxel 0,25 mm) |
-| `curvas_nivel` | Cortes por cuantiles → contornos vectoriales por capa | Marching squares + Douglas–Peucker | Claude | Hecho para el chasis (`salida/chasis.svg`); faltan las capas por cuantiles |
+| `curvas_nivel` | Cortes por cuantiles → contornos vectoriales por capa | Marching squares + Douglas–Peucker + BFS + apertura | Claude | Hecho: chasis + 3 capas por cuantiles (`salida/capa_k.svg`), limpias y una dentro de otra |
 | `piezas` | Clase `Pieza`: nombre, contorno, técnica, altura | Lista indexada | Claude | Nuevo |
 | `armado` | Árbol de armado: cada pieza sabe sobre cuál va; el recorrido da los pasos del manual | Árbol | **Sara** | Nuevo |
 | `uniones` | Un tipo de unión: ranura en la pieza padre + pestaña en la hija | Booleanas 2D | Claude | Nuevo, simple |
 | `exportar` | SVG a escala real (mm) para el láser + JSON del manual | — | Claude | SVG hecho (capas corte/grabado); falta JSON |
 | `alas` | Venas procedurales: ramificación fractal (venas principales, corte) + Voronoi de pocos centros (celdas, impresas) | Grafo + Voronoi | **Sara** (regla de ramificación) + Claude | Prototipo 2D |
+| `maqueta` | Las piezas extruidas y apiladas en Blender para ver cómo se ve (colección `Maqueta_Capas`) | Curvas 2D con relleno | Claude | Hecho |
 | `textura` | Textura proyectada en perspectiva desde el ojo del observador | Mapeo proyectivo | — | Después del martes |
 
 ## Orden de trabajo

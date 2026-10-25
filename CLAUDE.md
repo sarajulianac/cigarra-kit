@@ -60,6 +60,11 @@ Pipeline que convierte un modelo 3D de una **cigarra** en un **kit para armar si
 - Pipeline en Blender: `correr_en_blender.py` (Text Editor → Run Script, o por el MCP).
 - Contornos: tolerancia de simplificación 0,1 mm (`TOLERANCIA_MM`). **Solo se simplifican bordes
   trazados** (chasis, capas); ranuras y pestañas nunca, se agregan después y exactas.
+- Capas: **chasis = nivel 0** y `N_CAPAS = 3` encima, con cortes por cuantiles (25/50/75 % del área).
+  Se limpian de abajo hacia arriba (apertura con el ancho del láser + islas < 25 mm² fuera) y siguen
+  una dentro de otra. Cada isla es una pieza física. Relieve comprimido ~10× en altura (bajo relieve).
+- Maqueta 3D: colección `Maqueta_Capas` en x = 2,8 (fuera de lo que ya hay en la escena). Se rehace
+  en cada corrida; no tocar los modelos de Sara.
 - Chasis = silueta del cuerpo + 1,5 mm de margen (`MARGEN_CHASIS_MM`). En los SVG la cigarra va
   **con la cabeza hacia arriba**, como cuelga en la pared (giro de 90°, sin reflejar).
 - **Sin pegante.** Uniones permitidas: ranura + pestaña, atrapada entre capas, remache (perla), engaste.
