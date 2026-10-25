@@ -12,6 +12,7 @@ import time
 
 import bpy
 import numpy as np
+from mathutils import Vector
 
 try:
     REPO = os.path.dirname(os.path.abspath(__file__))
@@ -24,10 +25,15 @@ if REPO not in sys.path:
 
 # Recargar: sin esto Blender sigue usando la version vieja de los modulos
 # aunque se hayan editado los archivos.
-import cigarra.config, cigarra.entrada, cigarra.vista, cigarra.curvas_nivel, cigarra.exportar  # noqa: E401
-for modulo in (cigarra.config, cigarra.entrada, cigarra.vista, cigarra.curvas_nivel, cigarra.exportar):
+import cigarra.config, cigarra.entrada, cigarra.vista, cigarra.curvas_nivel, cigarra.exportar, cigarra.maqueta  # noqa: E401,E501
+for modulo in (cigarra.config, cigarra.entrada, cigarra.vista, cigarra.curvas_nivel, cigarra.exportar,
+               cigarra.maqueta):
     importlib.reload(modulo)
-from cigarra import config, curvas_nivel, entrada, exportar, vista  # noqa: E402
+from cigarra import config, curvas_nivel, entrada, exportar, maqueta, vista  # noqa: E402
+
+# La maqueta se arma al lado de la Cigarra (en +x), en su propia coleccion, fuera
+# de lo que ya hay en la escena (la ShadowBox_Cigarra vieja ocupa x = 1,2 a 2,1).
+SEPARACION_MAQUETA = 2.8
 
 
 def guardar_png(arreglo_rgb, nombre, carpeta):
@@ -45,30 +51,52 @@ def guardar_png(arreglo_rgb, nombre, carpeta):
     return im.filepath_raw
 
 
-def chasis_svg(cuerpo, carpeta):
-    """Silueta del cuerpo -> chasis con margen -> contorno limpio -> SVG con la cabeza arriba."""
-    px = config.PIXEL_MM
-    # Margen: dilatar con un pincel redondo de MARGEN_CHASIS_MM de radio.
-    chasis = curvas_nivel.dilatar(cuerpo, round(config.MARGEN_CHASIS_MM / px))
-
-    # Fabricabilidad: una sola isla y nada mas angosto que el minimo del laser.
-    islas = curvas_nivel.contar_islas(chasis)
-    delgado = curvas_nivel.zonas_delgadas(chasis, round(config.ANCHO_MIN_LASER_MM / 2 / px))
-    print(f"Chasis: {len(islas)} isla(s) | zonas mas angostas que "
-          f"{config.ANCHO_MIN_LASER_MM} mm: {delgado.sum()} px")
-
-    limpios, n_crudos = curvas_nivel.contornos_mm(chasis, px, config.TOLERANCIA_MM)
-    huecos = sum(curvas_nivel.area_con_signo(c) < 0 for c in limpios)
-    print(f"Contornos: {len(limpios)} ({huecos} huecos) | puntos {n_crudos} -> "
-          f"{sum(len(c) for c in limpios)} con tolerancia {config.TOLERANCIA_MM} mm")
-
-    hoja, ancho, alto = exportar.cabeza_arriba(limpios)
+def guardar_svg(piezas_mm, nombre, carpeta, referencia):
+    """Piezas (listas de contornos en mm) -> SVG con la cabeza arriba, con el
+    encuadre de `referencia` (el chasis) para que todas las hojas se superpongan."""
+    todos = [c for p in piezas_mm for c in p]
+    hoja, ancho, alto = exportar.cabeza_arriba(todos, referencia=referencia)
     lienzo = exportar.Lienzo(ancho, alto)
     for c in sorted(hoja, key=lambda c: abs(curvas_nivel.area_con_signo(c))):
-        lienzo.polilinea(c)          # huecos (mas pequenos) antes que el borde exterior
-    print(f"SVG: hoja {ancho:.1f} x {alto:.1f} mm ->",
-          lienzo.guardar(os.path.join(carpeta, "chasis.svg")))
-    return chasis
+        lienzo.polilinea(c)          # huecos (mas pequenos) antes que los bordes exteriores
+    return lienzo.guardar(os.path.join(carpeta, nombre + ".svg"))
+
+
+def piezas_mm(mascara):
+    """Una lista de contornos en mm por cada isla (pieza fisica) de la mascara."""
+    return [curvas_nivel.contornos_mm(isla, config.PIXEL_MM, config.TOLERANCIA_MM)[0]
+            for isla in curvas_nivel.islas(mascara)]
+
+
+def chasis_y_capas(cuerpo, altura, carpeta):
+    """Nivel 0 = chasis (silueta + margen); niveles 1..N_CAPAS = curvas de nivel."""
+    px = config.PIXEL_MM
+    mm2 = px * px
+    radio = curvas_nivel.radio_para_ancho(config.ANCHO_MIN_LASER_MM, px)
+
+    # --- Chasis: dilatar con un pincel redondo de MARGEN_CHASIS_MM de radio.
+    chasis = curvas_nivel.dilatar(cuerpo, round(config.MARGEN_CHASIS_MM / px))
+    delgado = curvas_nivel.zonas_delgadas(chasis, radio)
+    p_chasis = piezas_mm(chasis)
+    print(f"Chasis: {len(p_chasis)} pieza(s) | {chasis.sum() * mm2 / 100:.1f} cm2 "
+          f"| mas angosto que {config.ANCHO_MIN_LASER_MM} mm: {delgado.sum()} px")
+    referencia = p_chasis[0]
+    print("  SVG:", os.path.basename(guardar_svg(p_chasis, "chasis", carpeta, referencia)))
+
+    # --- Capas por cuantiles, limpiadas de abajo hacia arriba.
+    cortes = curvas_nivel.cortes_por_cuantiles(altura, config.N_CAPAS)
+    crudas = curvas_nivel.capas_apiladas(altura, cortes)
+    limpias = curvas_nivel.capas_limpias(crudas, cuerpo, radio, config.AREA_MIN_PIEZA_MM2 / mm2)
+    niveles = [("chasis", p_chasis)]
+    for k, (cruda, limpia) in enumerate(zip(crudas, limpias), start=1):
+        piezas = piezas_mm(limpia)
+        perdido = (cruda & ~limpia).sum() * mm2
+        print(f"Capa {k}: corte z = {cortes[k - 1]:.3f} | {len(piezas)} pieza(s) "
+              f"| {limpia.sum() * mm2 / 100:.1f} cm2 | descartado {perdido:.0f} mm2 "
+              f"({len(curvas_nivel.islas(cruda))} islas antes de limpiar)")
+        print("  SVG:", os.path.basename(guardar_svg(piezas, f"capa_{k}", carpeta, referencia)))
+        niveles.append((f"capa_{k}", piezas))
+    return chasis, limpias, niveles
 
 
 def main():
@@ -92,14 +120,18 @@ def main():
     print("Piezas que no se ven desde arriba:", ", ".join(ocultas) or "ninguna")
     carpeta = os.path.join(REPO, "salida")
     os.makedirs(carpeta, exist_ok=True)
-    chasis = chasis_svg(cuerpo, carpeta)
+    chasis, capas, niveles = chasis_y_capas(cuerpo, altura, carpeta)
+    raiz = bpy.data.objects["Cigarra"]
+    ubicacion = raiz.matrix_world.translation + Vector((SEPARACION_MAQUETA, 0, 0))
+    maqueta.construir(niveles, rejilla, ubicacion)
+    print(f"Maqueta: coleccion {maqueta.COLECCION}, en {tuple(round(v, 2) for v in ubicacion)}")
     print("=" * 64)
     # Silueta: negro sobre blanco. Alturas: mas claro = mas alto.
     print("PNG:", guardar_png(np.repeat(~cuerpo[..., None], 3, axis=2).astype(float),
                               "chasis_silueta", carpeta))
     z = np.nan_to_num((altura - np.nanmin(altura)) / np.nanmax(altura - np.nanmin(altura)), nan=0.0)
     print("PNG:", guardar_png(np.repeat(z[..., None], 3, axis=2), "mapa_alturas", carpeta))
-    return malla, rejilla, altura, parte, cuerpo, chasis
+    return malla, rejilla, altura, parte, cuerpo, chasis, capas
 
 
 if __name__ == "__main__":
