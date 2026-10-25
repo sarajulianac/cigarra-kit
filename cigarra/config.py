@@ -40,6 +40,18 @@ def a_mm(unidades):
 # que el ancho minimo del laser (0,8 mm), para que los bordes no salgan en escalera.
 PIXEL_MM = 0.25
 
+# ---------------------------- CONTORNOS --------------------------------------
+# Douglas-Peucker: la linea limpia no se aleja mas de esto del borde trazado.
+# Regla: menor o igual al paso de calibracion de la peineta (0,1 mm) y mucho
+# menor que el ancho minimo del laser. Del mismo orden que el error del propio
+# pixel (~0,12 mm): bajarla mas solo copia la cuadricula.
+# Solo se simplifican bordes TRAZADOS (chasis, capas); ranuras y pestanas
+# nunca: se calculan exactas y se agregan despues de simplificar.
+TOLERANCIA_MM = 0.1
+
+# Borde del chasis alrededor de la silueta del cuerpo (asoma detras de las piezas).
+MARGEN_CHASIS_MM = 1.5
+
 # ---------------------------- MATERIALES (grosor, mm) ------------------------
 CARTON_MM = 1.5
 CARTULINA_MM = 0.4

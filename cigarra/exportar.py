@@ -23,6 +23,26 @@ def _num(x):
     return f"{x:.3f}".rstrip("0").rstrip(".")
 
 
+def cabeza_arriba(polilineas_mm, margen_mm=5.0):
+    """Lleva contornos de la vista cenital (cabeza hacia +x, y hacia arriba) a la
+    hoja del SVG, con la cabeza hacia ARRIBA como queda colgada en la pared.
+
+    Es un giro de 90 grados antihorario, (x, y) -> (-y, x), seguido del cambio
+    a coordenadas de SVG (y crece hacia abajo). Un giro no refleja: el lado
+    izquierdo de la cigarra sigue a la izquierda de quien la mira de frente.
+    Devuelve las polilineas movidas para empezar en (margen, margen) y el
+    tamano de hoja (ancho, alto) que las contiene.
+    """
+    girados = [[(-y, x) for x, y in p] for p in polilineas_mm]
+    todos = [q for p in girados for q in p]
+    xmin = min(x for x, _ in todos)
+    ymax = max(y for _, y in todos)
+    hoja = [[(x - xmin + margen_mm, ymax - y + margen_mm) for x, y in p] for p in girados]
+    ancho = max(x for p in hoja for x, _ in p) + margen_mm
+    alto = max(y for p in hoja for _, y in p) + margen_mm
+    return hoja, ancho, alto
+
+
 class Lienzo:
     def __init__(self, ancho_mm, alto_mm):
         self.ancho = ancho_mm
