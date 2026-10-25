@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Blender (el .blend vive en la carpeta padre y no se versiona)
+*.blend
+*.blend1
+*.blend@
+
+# Ajustes locales de Claude Code
+.claude/settings.local.json
