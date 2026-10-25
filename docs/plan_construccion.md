@@ -12,8 +12,8 @@ algoritmo junto a la foto de referencia.
 | Módulo | Qué hace | Estructura / algoritmo | Quién | Estado |
 |---|---|---|---|---|
 | `config` | Escala (30 cm de envergadura) y reglas de fabricación en un solo lugar | Constantes | Claude | Hecho |
-| `entrada` | Carga la cigarra, quita las alas, la lleva a su marco local | Malla (lista indexada) | Claude | Existe en `legado/shadowbox_pipeline.py` (`malla_local`) |
-| `vista` | Vista ortográfica cenital → mapa de alturas | BVH + arreglo 2D | Claude | Existe (`mapa_de_alturas`) |
+| `entrada` | Carga la cigarra, quita las alas, la lleva a su marco local | Malla (lista indexada) | Claude | Hecho (sin BMesh; quita Ala y Vena) |
+| `vista` | Vista ortográfica cenital → mapa de alturas | BVH + arreglo 2D | Claude | Hecho: mapa de alturas + silueta del chasis (píxel 0,25 mm) |
 | `curvas_nivel` | Cortes por cuantiles → contornos vectoriales por capa | Marching squares + simplificación | Claude | Nuevo |
 | `piezas` | Clase `Pieza`: nombre, contorno, técnica, altura | Lista indexada | Claude | Nuevo |
 | `armado` | Árbol de armado: cada pieza sabe sobre cuál va; el recorrido da los pasos del manual | Árbol | **Sara** | Nuevo |
