@@ -52,35 +52,101 @@ def erosionar(mascara, radio_px):
     return _barrer(mascara, radio_px, np.logical_and)
 
 
+def radio_para_ancho(ancho_mm, pixel_mm):
+    """Radio del pincel (pixeles) cuyo diametro, 2 * radio + 1, alcanza ancho_mm."""
+    return max(0, int(np.ceil((ancho_mm / pixel_mm - 1) / 2)))
+
+
+def abrir(mascara, radio_px):
+    """Apertura morfologica: erosionar y volver a dilatar. Quita todo lo que es
+    mas angosto que el pincel y deja intacto lo demas."""
+    return dilatar(erosionar(mascara, radio_px), radio_px)
+
+
 def zonas_delgadas(mascara, radio_px):
-    """Apertura morfologica: lo que desaparece al erosionar y volver a dilatar
-    es mas angosto que el pincel (2 * radio + 1 pixeles)."""
-    return mascara & ~dilatar(erosionar(mascara, radio_px), radio_px)
+    """Lo que desaparece con la apertura: mas angosto que el pincel."""
+    return mascara & ~abrir(mascara, radio_px)
 
 
 # ---------------------- ISLAS (BFS) ------------------------------------------
-def contar_islas(mascara):
+def etiquetar(mascara):
     """Busqueda en anchura sobre la rejilla. Cada isla es una pieza fisica
-    separada: si el chasis tiene mas de una, algo se cae al cortarlo.
-    Vecinos = arriba, abajo, izquierda, derecha (los de esquina no cuentan,
-    igual que en los contornos)."""
+    separada. Vecinos = arriba, abajo, izquierda, derecha (los de esquina no
+    cuentan, igual que en los contornos).
+
+    Devuelve un arreglo con el numero de isla de cada pixel (0 = vacio, 1, 2, ...)
+    y el tamano en pixeles de cada isla (tamanos[k - 1] es el de la isla k).
+    """
     alto, ancho = mascara.shape
-    visto = np.zeros(mascara.shape, bool)
+    etiqueta = np.zeros(mascara.shape, np.int32)
     tamanos = []
     for j0, i0 in zip(*np.nonzero(mascara)):
-        if visto[j0, i0]:
+        if etiqueta[j0, i0]:
             continue
-        visto[j0, i0] = True
+        k = len(tamanos) + 1
+        etiqueta[j0, i0] = k
         cola, n = deque([(j0, i0)]), 0
         while cola:
             j, i = cola.popleft()
             n += 1
             for a, b in ((j + 1, i), (j - 1, i), (j, i + 1), (j, i - 1)):
-                if 0 <= a < alto and 0 <= b < ancho and mascara[a, b] and not visto[a, b]:
-                    visto[a, b] = True
+                if 0 <= a < alto and 0 <= b < ancho and mascara[a, b] and not etiqueta[a, b]:
+                    etiqueta[a, b] = k
                     cola.append((a, b))
         tamanos.append(n)
-    return tamanos
+    return etiqueta, tamanos
+
+
+def contar_islas(mascara):
+    """Tamano de cada isla. Si el chasis tiene mas de una, algo se cae al cortarlo."""
+    return etiquetar(mascara)[1]
+
+
+def islas(mascara):
+    """Una mascara por isla, de la mas grande a la mas pequena."""
+    etiqueta, tamanos = etiquetar(mascara)
+    orden = sorted(range(len(tamanos)), key=lambda k: -tamanos[k])
+    return [etiqueta == k + 1 for k in orden]
+
+
+# ---------------------- CAPAS POR CUANTILES ----------------------------------
+def cortes_por_cuantiles(altura, n_capas):
+    """Alturas de corte para n_capas encima del chasis (el chasis es el nivel 0).
+
+    Cortes parejos desperdician capas (abajo solo hay patas delgadas). Con
+    cuantiles cada nivel recibe la misma AREA visible: con 3 capas, los cortes
+    van en el 25, 50 y 75 % de los pixeles del cuerpo ordenados por altura.
+    Es una ecualizacion de histograma de la profundidad.
+    """
+    valores = altura[np.isfinite(altura)]
+    return np.quantile(valores, [k / (n_capas + 1) for k in range(1, n_capas + 1)])
+
+
+def capas_apiladas(altura, cortes):
+    """Capa k = todo lo que esta a altura >= corte k (NaN = vacio). Como los
+    cortes suben, cada capa queda DENTRO de la de abajo, que la sostiene."""
+    h = np.where(np.isfinite(altura), altura, -np.inf)
+    return [h >= c for c in cortes]
+
+
+def limpiar(mascara, radio_px, area_min_px):
+    """Quita lo que no se puede fabricar: astillas mas angostas que el pincel
+    (apertura) e islas mas pequenas que area_min_px."""
+    abierta = abrir(mascara, radio_px)
+    etiqueta, tamanos = etiquetar(abierta)
+    grandes = [k + 1 for k, n in enumerate(tamanos) if n >= area_min_px]
+    return np.isin(etiqueta, grandes)
+
+
+def capas_limpias(capas, base, radio_px, area_min_px):
+    """Limpia de abajo hacia arriba. Cada capa se recorta primero con la de
+    abajo YA limpia: asi, si una isla de abajo se descarto, lo que tenia
+    encima tambien se va, y las capas siguen una dentro de otra."""
+    resultado, abajo = [], base
+    for capa in capas:
+        abajo = limpiar(capa & abajo, radio_px, area_min_px)
+        resultado.append(abajo)
+    return resultado
 
 
 # ---------------------- MARCHING SQUARES -------------------------------------

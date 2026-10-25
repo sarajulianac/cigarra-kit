@@ -52,6 +52,14 @@ TOLERANCIA_MM = 0.1
 # Borde del chasis alrededor de la silueta del cuerpo (asoma detras de las piezas).
 MARGEN_CHASIS_MM = 1.5
 
+# ---------------------------- CAPAS (curvas de nivel) ------------------------
+# Capas encima del chasis. El chasis es el nivel 0; con 3 capas los cortes van
+# en el 25, 50 y 75 % del area visible del cuerpo (cuantiles).
+N_CAPAS = 3
+# Islas mas pequenas que esto se descartan: no se pueden agarrar ni sujetar
+# con una pestana (~5 x 5 mm). El prototipo usaba 100 mm2 (bisturi + pegante).
+AREA_MIN_PIEZA_MM2 = 25.0
+
 # ---------------------------- MATERIALES (grosor, mm) ------------------------
 CARTON_MM = 1.5
 CARTULINA_MM = 0.4
