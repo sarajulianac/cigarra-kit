@@ -40,9 +40,15 @@ Pipeline que convierte un modelo 3D de una **cigarra** en un **kit para armar si
 
 ## Escala y reglas de fabricación
 
-- Insecto de **15 cm** en su lado mayor = 1,178 unidades de Blender → `MM = 1.178 / 150` unidades por mm.
+- **Fuente única: `cigarra/config.py`.** Ningún módulo nuevo repite estos números; los scripts de
+  `legado/` todavía tienen la escala vieja (15 cm) y no se tocan.
+- Envergadura de **30 cm** (escala doble, decidido el 25 oct 2026) = 1,178 unidades de Blender
+  → `MM = 1.178 / 300` unidades por mm.
+  - Ojo: la envergadura medida de los modelos es ~1,23 unidades; Sara decidió conservar 1,178,
+    así que el kit real sale de ~31,4 cm.
 - Anchos mínimos: bisturí 2 mm · **láser 0,8 mm** · impreso 0,3 mm.
-- Cartón 1,5 mm · cartulina 0,4 mm · **holgura** de ranuras 0,3 mm.
+- Cartón 1,5 mm · cartulina 0,4 mm · **holgura** de ranuras 0,3 mm (provisional: se calibra con la
+  peineta de prueba).
 - **Sin pegante.** Uniones permitidas: ranura + pestaña, atrapada entre capas, remache (perla), engaste.
 - Venas de corte del ala: deben formar **un solo componente conectado** (si no, se caen al cortar).
 
