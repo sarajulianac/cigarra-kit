@@ -16,3 +16,6 @@ salida/*.png
 
 # Ajustes locales de Claude Code
 .claude/settings.local.json
+
+# Retroalimentacion del profesor: se queda solo en el computador de Sara
+docs/retroalimentacion_2026-10-20.md

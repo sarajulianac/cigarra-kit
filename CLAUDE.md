@@ -23,7 +23,8 @@ Pipeline que convierte un modelo 3D de una **cigarra** en un **kit para armar si
 - Modelos y scripts heredados en `legado/` (vienen de Blender, ver abajo). Todavía no están
   organizados como módulos.
 - La entrega del **martes 27 de octubre de 2026** es "código avanzado del proyecto".
-- Retroalimentación del profesor (20 oct): `docs/retroalimentacion_2026-10-20.md`.
+- Retroalimentación del profesor (20 oct): `docs/retroalimentacion_2026-10-20.md`. Solo local: Sara la
+  sacó de GitHub (está en `.gitignore`); no volver a versionarla.
 - Plan de construcción: `docs/plan_construccion.md`.
 
 ## Blender
