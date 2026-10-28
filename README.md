@@ -1,7 +1,5 @@
 # Cigarra para armar
 
-Proyecto final de Computación Visual Interactiva (Uniandes, 2026-2) — Sara Cuadrado.
-
 Pipeline en Python + Blender que convierte un modelo 3D de una cigarra en un kit para armar sin
 pegante (relieve de pared) con su manual de ensamble.
 
