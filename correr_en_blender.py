@@ -25,11 +25,11 @@ if REPO not in sys.path:
 
 # Recargar: sin esto Blender sigue usando la version vieja de los modulos
 # aunque se hayan editado los archivos.
-import cigarra.config, cigarra.entrada, cigarra.vista, cigarra.curvas_nivel, cigarra.exportar, cigarra.maqueta  # noqa: E401,E501
+import cigarra.config, cigarra.entrada, cigarra.vista, cigarra.curvas_nivel, cigarra.exportar, cigarra.maqueta, cigarra.armado  # noqa: E401,E501
 for modulo in (cigarra.config, cigarra.entrada, cigarra.vista, cigarra.curvas_nivel, cigarra.exportar,
-               cigarra.maqueta):
+               cigarra.maqueta, cigarra.armado):
     importlib.reload(modulo)
-from cigarra import config, curvas_nivel, entrada, exportar, maqueta, vista  # noqa: E402
+from cigarra import armado, config, curvas_nivel, entrada, exportar, maqueta, vista  # noqa: E402
 
 # La maqueta se arma al lado de la Cigarra (en +x), en su propia coleccion, fuera
 # de lo que ya hay en la escena (la ShadowBox_Cigarra vieja ocupa x = 1,2 a 2,1).
@@ -125,13 +125,23 @@ def main():
     ubicacion = raiz.matrix_world.translation + Vector((SEPARACION_MAQUETA, 0, 0))
     maqueta.construir(niveles, rejilla, ubicacion)
     print(f"Maqueta: coleccion {maqueta.COLECCION}, en {tuple(round(v, 2) for v in ubicacion)}")
+
+    # Arbol de armado y pasos del manual (armado.py, escrito por Sara).
+    arbol = armado.construir_arbol(chasis, capas)
+    pasos = armado.pasos_del_manual(arbol)
+    with open(os.path.join(carpeta, "manual.txt"), "w", encoding="utf-8") as f:
+        f.write("Manual de armado - Cigarra para armar\n\n" + "\n".join(pasos) + "\n")
+    print("Manual de armado:")
+    for paso in pasos:
+        print("  " + paso)
+    print("  TXT: manual.txt")
     print("=" * 64)
     # Silueta: negro sobre blanco. Alturas: mas claro = mas alto.
     print("PNG:", guardar_png(np.repeat(~cuerpo[..., None], 3, axis=2).astype(float),
                               "chasis_silueta", carpeta))
     z = np.nan_to_num((altura - np.nanmin(altura)) / np.nanmax(altura - np.nanmin(altura)), nan=0.0)
     print("PNG:", guardar_png(np.repeat(z[..., None], 3, axis=2), "mapa_alturas", carpeta))
-    return malla, rejilla, altura, parte, cuerpo, chasis, capas
+    return malla, rejilla, altura, parte, cuerpo, chasis, capas, arbol
 
 
 if __name__ == "__main__":
