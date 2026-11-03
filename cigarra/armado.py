@@ -9,6 +9,8 @@
 # cada pieza es una isla conectada, y las piezas de la capa de abajo no se tocan,
 # entonces no puede quedar sobre dos a la vez.
 # ===================================================================
+import numpy as np
+from . import curvas_nivel
 
 class Nodo:
     def __init__(self, nombre, nivel, mascara):
@@ -21,3 +23,19 @@ class Nodo:
     def agregar_hijo(self, hijo):
         self.hijos.append(hijo)
         hijo.padre = self 
+
+def construir_arbol(chasis, capas):
+    raiz = Nodo("chasis", 0, chasis)
+    abajo = [raiz]
+    for k, capa in enumerate(capas, start=1):
+        este_nivel = []
+        for n, isla in enumerate(curvas_nivel.islas(capa)):
+            letra = "abcdefgh"[n]
+            pieza = Nodo(f"capa_{k}_{letra}", k, isla)
+            j, i = np.argwhere(isla)[0]
+            for candidato in abajo:
+                if candidato.mascara[j, i]:
+                    candidato.agregar_hijo(pieza)
+            este_nivel.append(pieza)
+        abajo = este_nivel
+    return raiz
