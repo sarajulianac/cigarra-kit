@@ -38,6 +38,10 @@ def partes_del_cuerpo(raiz, excluir=EXCLUIR):
 def cargar_cuerpo(nombre_raiz="Cigarra", excluir=EXCLUIR):
     """Junta todas las piezas del cuerpo en una sola Malla, en el marco propio de la cigarra."""
     raiz = bpy.data.objects[nombre_raiz]
+    # Blender no recalcula matrix_world en cuanto se mueve o se crea un objeto:
+    # lo hace al redibujar la escena. En un Blender recien abierto (o sin
+    # ventana, con -b) puede no haberlo hecho todavia; esto lo obliga ahora.
+    bpy.context.view_layer.update()
     # Marco propio: se deshace la posicion/rotacion de la raiz en la escena, asi
     # la cigarra queda centrada y alineada aunque la hayan movido.
     inversa_raiz = np.array(raiz.matrix_world.inverted())
