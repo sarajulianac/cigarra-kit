@@ -5,7 +5,7 @@ Prof. Pablo Figueroa.
 
 Un pipeline en Python + Blender que convierte el modelo 3D de una cigarra en un **kit de cartón para armar
 sin pegante**: un relieve para colgar en la pared, de 30 cm de envergadura, con los archivos listos para
-el corte láser y (en construcción) su manual de armado.
+el corte láser y su manual de armado.
 
 | Modelo 3D en Blender | Curvas de nivel (piezas del kit) | Maqueta del kit armado |
 |:---:|:---:|:---:|
@@ -29,8 +29,21 @@ el corte láser y (en construcción) su manual de armado.
    [`salida/`](salida/).
 6. **Maqueta** (`cigarra/maqueta.py`): las mismas piezas, con el grosor del cartón, apiladas en Blender
    para ver cómo se ve el kit antes de cortarlo.
-7. **Árbol de armado** (`cigarra/armado.py`, *en construcción*): qué pieza va sobre cuál. Recorrer el
-   árbol desde la raíz (el chasis) da el orden de los pasos del manual.
+7. **Árbol de armado y manual** (`cigarra/armado.py`): cada pieza es un nodo y su padre es la pieza sobre
+   la que va; la raíz es el chasis. Para hallar el padre basta un píxel de la pieza: cada pieza es una isla
+   conectada y las de abajo no se tocan, así que queda sobre una sola. Recorrer el árbol capa por capa
+   (BFS) da los pasos del manual, en [`salida/manual.txt`](salida/manual.txt):
+
+   ```
+   chasis                       Paso 1: chasis (la base)
+   ├─ capa_1_a  (cuerpo)        Paso 2: capa_1_a sobre chasis
+   │  └─ capa_2_a               Paso 3: capa_1_b sobre chasis
+   │     ├─ capa_3_a            Paso 4: capa_1_c sobre chasis
+   │     ├─ capa_3_b            Paso 5: capa_2_a sobre capa_1_a
+   │     └─ capa_3_c            Paso 6: capa_3_a sobre capa_2_a
+   ├─ capa_1_b  (ojo)           Paso 7: capa_3_b sobre capa_2_a
+   └─ capa_1_c  (ojo)           Paso 8: capa_3_c sobre capa_2_a
+   ```
 
 Antes de cortar el kit, [`salida/peineta_prueba.svg`](salida/peineta_prueba.svg) sirve para calibrar la
 holgura de las ranuras con el láser real (`cigarra/peineta.py`).
@@ -65,7 +78,7 @@ La maqueta aparece en la colección `Maqueta_Capas`.
 python3 -m cigarra.peineta
 ```
 
-**Pruebas automáticas** (25 pruebas, con el Python de Blender):
+**Pruebas automáticas** (29 pruebas, con el Python de Blender):
 
 ```bash
 /Applications/Blender.app/Contents/Resources/5.2/python/bin/python3.13 -m unittest -v
@@ -88,7 +101,8 @@ Las secciones son de **Marschner y Shirley, *Fundamentals of Computer Graphics*,
 | `curvas_nivel` | Morfología (dilatación, erosión, apertura) | Margen del chasis y zonas más angostas que el láser | — |
 | `curvas_nivel` | Polilíneas cerradas (*marching squares*, *Douglas–Peucker*) | Pasar de píxeles a líneas de corte | — |
 | `exportar` | Lienzo vectorial en milímetros | SVG a escala real para el láser | — |
-| `armado` | **Árbol** (nodo = pieza, padre = pieza de abajo) | Orden de armado para el manual | — |
+| `armado` | **Árbol** (nodo = pieza, padre = pieza de abajo) | Saber qué pieza va sobre cuál | — |
+| `armado` | **Fila** (cola) + **BFS** sobre el árbol | Pasos del manual, capa por capa | — |
 
 ## Estado actual
 
@@ -96,22 +110,21 @@ Las secciones son de **Marschner y Shirley, *Fundamentals of Computer Graphics*,
 - El pipeline de punta a punta: chasis y 3 capas en SVG, listos para el láser.
 - Maqueta 3D del kit en Blender.
 - Peineta de prueba para calibrar la holgura.
-- La clase `Nodo` del árbol de armado.
-- 25 pruebas automáticas (medidas de las ranuras, capas una dentro de otra, contornos, etc.).
+- El árbol de armado de las 8 piezas y los 8 pasos del manual.
+- 29 pruebas automáticas (medidas de las ranuras, capas una dentro de otra, contornos, árbol y manual).
 
 **Sigue**
-1. La función que arma el árbol y genera los pasos del manual.
-2. Cortar la peineta en láser y fijar la holgura real en `config.py`.
-3. Uniones sin pegante (ranura + pestaña) entre las piezas.
-4. Alas generadas por algoritmo: venas que se ramifican (fractal) y celdas de Voronoi.
-5. Textura proyectada en perspectiva desde el punto de vista del observador.
+1. Cortar la peineta en láser y fijar la holgura real en `config.py`.
+2. Uniones sin pegante (ranura + pestaña) entre cada pieza y su padre en el árbol.
+3. Alas generadas por algoritmo: venas que se ramifican (fractal) y celdas de Voronoi.
+4. Textura proyectada en perspectiva desde el punto de vista del observador.
 
 ## Estructura del repositorio
 
 ```
 cigarra/            el pipeline, un módulo por paso (ver arriba)
 pruebas/            pruebas automáticas (unittest)
-salida/             SVG listos para el láser: chasis, capas 1–3 y peineta
+salida/             SVG listos para el láser (chasis, capas 1–3 y peineta) y manual.txt
 correr_en_blender.py  corre todo el pipeline dentro de Blender
 legado/             scripts del primer prototipo (modelo base, modelo híbrido, shadow box, calco de alas)
 docs/               plan de construcción e imágenes de este README
