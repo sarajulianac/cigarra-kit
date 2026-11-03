@@ -39,3 +39,21 @@ def construir_arbol(chasis, capas):
             este_nivel.append(pieza)
         abajo = este_nivel
     return raiz
+
+
+def pasos_del_manual(raiz):
+    pasos = []
+    cola = [raiz]
+    while cola:
+        nodo = cola.pop(0)
+        numero = len(pasos) + 1
+        if nodo.padre is None:
+            texto = f"Paso {numero}: {nodo.nombre} (la base)"
+            pasos.append(texto)
+        else:
+            texto = f"Paso {numero}: {nodo.nombre} sobre {nodo.padre.nombre}"
+            pasos.append(texto)
+        for hijo in nodo.hijos:
+            cola.append(hijo)
+    return pasos
+        
