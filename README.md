@@ -11,7 +11,36 @@ el corte láser y su manual de armado.
 |:---:|:---:|:---:|
 | <img src="docs/img/modelo_3d.png" alt="Modelo 3D de la cigarra con las alas abiertas" width="260"> | <img src="docs/img/curvas_de_nivel.png" alt="Chasis y tres capas superpuestas, en tonos de cartón" width="200"> | <img src="docs/img/maqueta_3d.png" alt="Maqueta 3D: las piezas de cartón apiladas" width="260"> |
 
-## El pipeline, paso a paso
+## Novedad v0.3: piezas con volumen (desarrollo de superficies)
+
+Las capas planas apiladas (el pipeline de abajo) perdían el volumen de la cigarra. Desde esta versión el
+abdomen y el pronoto se fabrican como **bandas curvas**: el script las **aplana** en una plantilla y, al
+encajar sus pestañas en el chasis, la cartulina recupera sola la curva del modelo. Todo se arma sin
+pegante.
+
+| Prototipo en cartulina, de lado | Prototipo en cartulina, desde arriba |
+|:---:|:---:|
+| <img src="docs/img/prototipo_papel_lateral.jpg" alt="Prototipo de papel: pronoto y ocho bandas del abdomen sobre el chasis, vistos de lado" width="360"> | <img src="docs/img/prototipo_papel_arriba.jpg" alt="Prototipo de papel visto desde arriba: bandas 1 a 8 escalonadas sobre el chasis" width="270"> |
+
+Cómo lo hace [`desarrollo/plantillas_cigarra.py`](desarrollo/plantillas_cigarra.py):
+
+1. **Longitud de arco** (`longitud_arco`, escrita por Sara): suma de las distancias entre puntos
+   consecutivos de la curva, como medir el lomo con un metro de costurera.
+2. **Desarrollo por triangulación**: la banda se parte en triángulos entre sus cortes transversales y
+   cada triángulo se coloca en el plano conservando la longitud de sus tres lados (intersección de dos
+   circunferencias, "triangular con compás"). Las bandas resultaron ser **troncos de cono**, no
+   cilindros: su borde de adelante es más largo que el de atrás, por eso abiertas tienen forma de arco.
+3. **Verificación**: se compara la diagonal que no se usó. Error 0 = la pieza se abre sin deformarse
+   (superficie desarrollable). Las 8 bandas y el pronoto dan **0,00 mm**.
+4. **Ranuras**: cada ranura del chasis se dibuja sobre el pie real de su pestaña, con su ancho y su
+   **ángulo** (en la cola el pie corre en diagonal).
+5. **Piezas planas**: chasis y patas proyectados desde arriba (las patas se unen antes con un booleano).
+
+Salida en [`salida/desarrollo/`](salida/desarrollo/): 5 hojas carta (SVG en mm y PDF), hojas 1–3 en
+cartulina 200 g y hojas 4–5 como guía para cortar cartón de 1,5 mm. Se corre con el `.blend` del
+prototipo abierto (objetos `Cigarra_H`), desde *Scripting → Text → Open → Run*.
+
+## El pipeline, paso a paso (v0.1–v0.2: capas planas)
 
 1. **Entrada** (`cigarra/entrada.py`): toma la cigarra de la escena, le **quita las alas** (van aparte,
    generadas por algoritmo) y junta el cuerpo en una sola malla, en el marco propio del insecto.
@@ -122,9 +151,11 @@ Las secciones son de **Marschner y Shirley, *Fundamentals of Computer Graphics*,
 ## Estructura del repositorio
 
 ```
-cigarra/            el pipeline, un módulo por paso (ver arriba)
+desarrollo/         v0.3: plantillas de las piezas con volumen (bandas, pronoto, chasis, patas)
+cigarra/            el pipeline de capas planas, un módulo por paso (ver arriba)
 pruebas/            pruebas automáticas (unittest)
 salida/             SVG listos para el láser (chasis, capas 1–3 y peineta) y manual.txt
+salida/desarrollo/  v0.3: las 5 hojas de plantillas (SVG en mm + PDF para imprimir)
 correr_en_blender.py  corre todo el pipeline dentro de Blender
 legado/             scripts del primer prototipo (modelo base, modelo híbrido, shadow box, calco de alas)
 docs/               plan de construcción e imágenes de este README
