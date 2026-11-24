@@ -11,6 +11,55 @@ el corte láser y su manual de armado.
 |:---:|:---:|:---:|
 | <img src="docs/img/modelo_3d.png" alt="Modelo 3D de la cigarra con las alas abiertas" width="260"> | <img src="docs/img/curvas_de_nivel.png" alt="Chasis y tres capas superpuestas, en tonos de cartón" width="200"> | <img src="docs/img/maqueta_3d.png" alt="Maqueta 3D: las piezas de cartón apiladas" width="260"> |
 
+## Novedad v0.4: alas procedurales, hombro articulado y mesonoto
+
+Las alas ahora se mueven. Cada ala se arma de 3 piezas, y todo sale de scripts que corren dentro de
+`Mecanismo_Alas.blend` (en [`mecanismo/`](mecanismo/)):
+
+1. **Estructura** (PLA, impresión 3D): las venas gruesas y la raíz que entra al hombro, en una sola pieza.
+2. **Membrana** (acetato o papel, corte): el contorno transparente.
+3. **Adhesivo** (vinilo o papel adhesivo): las venas finas, pegadas sobre la membrana.
+
+| Propuestas A y B (las 3 piezas separadas) | C · orgánica | D · regla de Sara |
+|:---:|:---:|:---:|
+| <img src="docs/img/alas_propuestas_AB_3piezas.png" alt="Dos versiones de ala con estructura, membrana y adhesivo separados en altura" width="300"> | <img src="docs/img/alas_C_organica.png" alt="Ala con venas curvas en abanico y bifurcaciones en Y" width="200"> | <img src="docs/img/alas_D_regla_de_sara.png" alt="Ala con rieles en V y cuatro venas que se dividen en dos" width="200"> |
+
+**Cómo se generan las venas** ([`mecanismo/alas_procedurales.py`](mecanismo/alas_procedurales.py)):
+
+- **Coordenadas del ala (u, v):** u recorre el ala de la base al ápice, medido con `longitud_arco` sobre
+  cada borde; v va de la costa al borde de fuga. Una vena con v constante corre paralela al contorno,
+  y todas se cierran en el ápice.
+- **Bifurcaciones en Y suave:** entre bifurcaciones v cambia con *smoothstep*, así cada rama sale con la
+  dirección de su madre; el último tramo cae al borde con t², en ángulo.
+- **Regla recursiva** ([`mecanismo/mis_reglas.py`](mecanismo/mis_reglas.py), escrita por Sara): *una vena
+  crece y luego se divide en dos venas más pequeñas*. La función `bifurcar` se llama a sí misma; cambiar
+  `D_GENERACIONES` o `D_ABERTURA` da otra ala con la misma regla.
+- **Red secundaria (versión B):** diagrama de Voronoi, el dual de una triangulación de Delaunay de puntos
+  al azar, calculado en un espacio estirado para que las celdas salgan alargadas.
+
+**El hombro** ([`mecanismo/produccion_prueba.py`](mecanismo/produccion_prueba.py)), inspirado en el hombro
+de un maniquí: una esfera de 20 mm que gira sobre un tornillo M3 a lo largo de un **eje oblicuo**. El eje se
+calculó a partir de las dos poses del ala, la de reposo como techo y la de exhibición abierta, con el
+teorema de rotación de Euler. Las raíces quedan a 16° del eje, así que:
+
+- la esfera se imprime en **4 rodajas** apiladas en el tornillo, cada una con su bolsillo;
+- la raíz anterior va **fija**; la posterior va en un **abanico de 35°**: el ala anterior gira sola y luego
+  la arrastra (giro desfasado). La lengüeta del soporte entra por un abanico de 105°;
+- cada raíz lleva un **agujero oblicuo** para el tornillo, y los bolsillos se calculan barriendo cada pieza
+  a lo largo de la animación (unión por vóxeles). Sin choques en todo el recorrido (BVH).
+
+**El mesonoto** ([`mecanismo/mesonoto/`](mecanismo/mesonoto/)) tiene doble curvatura, así que no se puede
+desarrollar exacto. Cortarlo en franjas transversales pedía pinzas de 34 mm; en franjas a lo largo del
+cuerpo, unidas por el centro, las pinzas miden 2 mm o menos. Sale una sola pieza con pinzas en V cortas,
+pestañas al chasis y los huecos de la esfera (el corte exacto de la esfera con la superficie).
+
+<img src="docs/img/mesonoto_plantilla.png" alt="Plantilla plana del mesonoto con pinzas en los bordes, pestañas a los lados y dos huecos circulares" width="560">
+
+**Prueba de impresión** en [`salida/v0.4_prueba_impresion/`](salida/v0.4_prueba_impresion/): los STL de la
+versión C (alas anterior y posterior, esfera en 4 rodajas, soporte) y 4 hojas carta para imprimir al 100 %
+(membranas, mesonoto y guía de ranuras para el chasis). Tornillería: M3 × 18 cabeza botón (ISO 7380) y
+tuerca M3 (DIN 934).
+
 ## Novedad v0.3: piezas con volumen (desarrollo de superficies)
 
 Las capas planas apiladas (el pipeline de abajo) perdían el volumen de la cigarra. Desde esta versión el
@@ -145,17 +194,19 @@ Las secciones son de **Marschner y Shirley, *Fundamentals of Computer Graphics*,
 **Sigue**
 1. Cortar la peineta en láser y fijar la holgura real en `config.py`.
 2. Uniones sin pegante (ranura + pestaña) entre cada pieza y su padre en el árbol.
-3. Alas generadas por algoritmo: venas que se ramifican (fractal) y celdas de Voronoi.
+3. Probar en físico el hombro, las alas impresas y el mesonoto (v0.4).
 4. Textura proyectada en perspectiva desde el punto de vista del observador.
 
 ## Estructura del repositorio
 
 ```
+mecanismo/          v0.4: alas procedurales, hombro articulado y mesonoto (scripts de Blender)
 desarrollo/         v0.3: plantillas de las piezas con volumen (bandas, pronoto, chasis, patas)
 cigarra/            el pipeline de capas planas, un módulo por paso (ver arriba)
 pruebas/            pruebas automáticas (unittest)
 salida/             SVG listos para el láser (chasis, capas 1–3 y peineta) y manual.txt
 salida/desarrollo/  v0.3: las 5 hojas de plantillas (SVG en mm + PDF para imprimir)
+salida/v0.4_prueba_impresion/  STL de la prueba 3D y hojas de membranas y mesonoto
 correr_en_blender.py  corre todo el pipeline dentro de Blender
 legado/             scripts del primer prototipo (modelo base, modelo híbrido, shadow box, calco de alas)
 docs/               plan de construcción e imágenes de este README
